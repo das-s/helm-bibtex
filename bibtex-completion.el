@@ -1187,13 +1187,7 @@ Return DEFAULT if FIELD is not present in ENTRY."
                        (replace-regexp-in-string ; remove macros
                         "\\\\[[:alpha:]]+{"
                         ""
-                        (replace-regexp-in-string ; upcase initial letter
-                         "^[[:alpha:]]"
-                         'upcase
-                         (replace-regexp-in-string ; preserve stuff in braces from being downcased
-                          "\\(^[^{]*{\\)\\|\\(}[^{]*{\\)\\|\\(}.*$\\)\\|\\(^[^{}]*$\\)"
-                          (lambda (x) (downcase (s-replace "\\" "\\\\" x)))
-                          value)))))
+                        value)))
              ("booktitle" value)
              ;; Maintain the punctuation and capitalization that is used by
              ;; the journal in its title.
