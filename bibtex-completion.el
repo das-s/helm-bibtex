@@ -638,9 +638,11 @@ the hash table."
 
 (defun bibtex-completion-make-candidate (entry)
   "Return a candidate for ENTRY."
-  (cons (bibtex-completion-clean-string
-         (s-join " " (-map #'cdr entry)))
-        entry))
+  (let* ((candidate (bibtex-completion-clean-string
+                     (s-join " " (-map #'cdr entry))))
+         (candidate (concat candidate " " (car (assoc "=has-pdf=" entry))))
+         (candidate (concat candidate " " (car (assoc "=has-note=" entry)))))
+    (cons candidate entry)))
 
 (defun bibtex-completion-parse-bibliography (&optional ht-strings)
   "Parse the BibTeX entries listed in the current buffer and return a list of entries in the order in which they appeared in the BibTeX file.
@@ -705,8 +707,8 @@ does not exist, or if `bibtex-completion-pdf-field' is nil."
        ((not value) nil)         ; Field not defined.
        ((f-file? value) (list value))   ; A bare full path was found.
        ((-any 'f-file? (--map (f-join it (f-filename value)) (-flatten bibtex-completion-library-path))) (-filter 'f-file? (--map (f-join it (f-filename value)) (-flatten bibtex-completion-library-path))))
-       (t                               ; Zotero/Mendeley/JabRef format:
-        (let ((value (replace-regexp-in-string "\\([^\\]\\);" "\\1\^^" value)))
+       (t                               ; Zotero/Mendeley/JabRef/Calibre format:
+        (let ((value (replace-regexp-in-string "\\([^\\]\\)[;,]" "\\1\^^" value)))
           (cl-loop  ; Looping over the files:
            for record in (s-split "\^^" value)
                                         ; Replace unescaped colons by field separator:
@@ -1282,7 +1284,10 @@ Surrounding curly braces are stripped."
         (replace-regexp-in-string
          "\\(^[[:space:]]*[\"{][[:space:]]*\\)\\|\\([[:space:]]*[\"}][[:space:]]*$\\)"
          ""
-         (s-collapse-whitespace value))
+         ;; Collapse whitespaces when the content is not a path:
+         (if (equal bibtex-completion-pdf-field field)
+             value
+           (s-collapse-whitespace value)))
       default)))
 
 (defun bibtex-completion-insert-key (keys)

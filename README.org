@@ -7,6 +7,8 @@ Ivy-bibtex: [[http://melpa.org/#/ivy-bibtex][http://melpa.org/packages/ivy-bibte
 Helm-bibtex and ivy-bibtex allow you to search and manage your BibTeX bibliography.  They both share the same generic backend, bibtex-completion, but one uses the Helm completion framework and the other Ivy as a front-end.
 
 * News
+- 2021-04-12: Added a section below explaining how the bibliography can be automatically reloaded when PDFs and notes are added.  See [[https://github.com/tmalsburg/helm-bibtex#refresh-bibliography-when-new-pdfs-and-notes-are-added][here]].
+- 2021-04-08: It is now possible to search for entries with PDFs and notes by entering ~=has-pdf=~ and ~=has-note=~.
 - 2020-04-29: New commands ~helm-bibtex-with-notes~ and ~ivy-bibtex-with-noted~ for searching just within the entries that have notes.
 - 2018-06-09: Added virtual APA field ~author-or-editor~ for use in notes templates.
 - 2018-06-02: Reload bibliography proactively when bib files are changed.
@@ -107,7 +109,7 @@ If the BibTeX entries have a field that specifies the full path to the PDFs, tha
 
 If ~bibtex-completion-pdf-field~ is non-nil, bibtex-completion will first try to retrieve the file specified in this field.  If the field is not set for an entry or if the specified file does not exists, bibtex-completion falls back to the method described above (searching for key + ~.pdf~ in the directories listed in ~bibtex-completion-library-path~).
 
-File specifications can be bare paths or follow the format used by JabRef, Zotero, and Mendeley.  This format also allows the specification of multiple files (e.g., the main paper and supplementary material).  Examples:
+File specifications can be bare paths or follow the format used by JabRef, Zotero, Calibre, and Mendeley.  This format also allows the specification of multiple files (e.g., the main paper and supplementary material).  Examples:
 
 - ~File = {/path/to/article.pdf}~
 - ~File = {:/path/to/article.pdf:PDF}~
@@ -489,6 +491,16 @@ By default bibtex-completion assumes that note files are in org-mode format.  Ho
 #+END_SRC
 
 If the file type is set to something else than org-mode, the templates for new note files need to be adjusted as well.  See the section above for details.
+
+** Refresh bibliography when new PDFs and notes are added
+Bibtex-completion automatically reloads the bibliography when a ~.bib~ file is changed on disk.  However, bibtex-completion does not watch PDFs and notes.  Thus, when a new PDF or note is added, the bibliography must be manually reloaded to display the PDF and note symbols correctly (via prefix argument, e.g. ~C-u M-x helm-bibtex~).  Unfortunately, implementing automatic reloading for PDFs and notes is not entirely straightforward since bibtex completion is quite flexible in how PDFs and notes can be handled.  But for simple setups, there is an easy solution: just watch the ~bibtex-completion-library-path~ and ~bibtex-completion-notes-path~ directories and reload the bibliography when they change.  Example for the PDF directory:
+
+#+BEGIN_SRC emacs-lisp
+(setq tmalsburg-pdf-watch
+      (file-notify-add-watch bibtex-completion-library-path
+                             '(change)
+                             (lambda (event) (bibtex-completion-candidates))))
+#+END_SRC
 
 * Usage
 :PROPERTIES:
